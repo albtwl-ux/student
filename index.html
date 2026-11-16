@@ -91,7 +91,6 @@ input[type=text],input[type=date],textarea{width:100%;font-family:inherit;font-s
   <!-- الإعدادات -->
   <div class="card hide" id="set">
     <b>الإعدادات</b>
-    <label style="margin-top:8px">المدرسة</label><input type="text" id="sSchool">
     <label style="margin-top:8px">اسم المعلم</label><input type="text" id="sTeacher">
     <label style="margin-top:8px">عنوان التقرير</label><input type="text" id="sTitle">
     <div class="tools" style="margin-top:12px">
@@ -112,7 +111,7 @@ const SEED=[["أحمد صلاح عايش الراشد",599],["أمجد يوسف 
 const TAGS=['حفظ','سمع','أتقن','لم يتقن','غائب'];
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-if(!S||!S.students){S={students:SEED.map((x,i)=>({id:'s'+i,name:x[0],num:x[1]})),days:{},set:{school:'مدرسة الفيصلية الثانوية بالمبرز',teacher:'الأستاذ عيسى الخلف',title:'تقرير متابعة الطالب'}}}
+if(!S||!S.students){S={students:SEED.map((x,i)=>({id:'s'+i,name:x[0],num:x[1]})),days:{},set:{teacher:'الأستاذ عيسى الخلف',title:'تقرير متابعة الطالب'}}}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 
 let cur=new Date();cur.setHours(12,0,0,0);
@@ -162,8 +161,8 @@ $('bToday').onclick=()=>{cur=new Date();cur.setHours(12,0,0,0);render()};
 $('dPick').onchange=e=>{if(e.target.value){cur=new Date(e.target.value+'T12:00:00');render()}};
 $('bMan').onclick=()=>{$('man').classList.toggle('hide');$('set').classList.add('hide')};
 $('bSet').onclick=()=>{$('set').classList.toggle('hide');$('man').classList.add('hide');
-  $('sSchool').value=S.set.school;$('sTeacher').value=S.set.teacher;$('sTitle').value=S.set.title};
-['School','Teacher','Title'].forEach(k=>$('s'+k).oninput=e=>{S.set[k.toLowerCase()]=e.target.value;save()});
+  $('sTeacher').value=S.set.teacher;$('sTitle').value=S.set.title};
+['Teacher','Title'].forEach(k=>$('s'+k).oninput=e=>{S.set[k.toLowerCase()]=e.target.value;save()});
 
 $('bAdd').onclick=()=>{
   const names=$('newNames').value.split('\n').map(x=>x.trim()).filter(Boolean);
@@ -198,7 +197,7 @@ async function sendPdf(id,btn){
   const status=r.tags.length?r.tags.join(' - '):'—';
   const rows=[['اسم الطالب',s.name],['التاريخ',hij(cur)],['عنوان الدرس',d.lesson||'—'],['المتابعة',status]];
   if(r.note)rows.push(['ملاحظة',r.note]);
-  $('pdfCard').innerHTML=`<div class="h"><b>${esc(S.set.title)}</b><span>${esc(S.set.school)}</span></div>
+  $('pdfCard').innerHTML=`<div class="h"><b>${esc(S.set.title)}</b></div>
     <table>${rows.map(x=>`<tr><td>${x[0]}</td><td>${esc(x[1])}</td></tr>`).join('')}</table>
     <div class="f">المعلم: ${esc(S.set.teacher)}</div>`;
   const old=btn.textContent;btn.textContent='⏳ جاري التجهيز...';btn.disabled=true;
@@ -227,7 +226,7 @@ async function sendAll(btn){
   const rows=S.students.map((s,i)=>{const r=d.rec[s.id]||{tags:[],note:''};
     return `<tr><td>${i+1}</td><td style="text-align:right">${esc(s.name)}</td><td>${r.tags.join(' - ')||'—'}</td><td>${esc(r.note||'')}</td></tr>`}).join('');
   c.style.width='760px';
-  c.innerHTML=`<div class="h"><b>كشف متابعة الطلاب</b><span>${esc(S.set.school)}</span></div>
+  c.innerHTML=`<div class="h"><b>كشف متابعة الطلاب</b></div>
     <div style="font-size:17px;margin-bottom:12px"><b>التاريخ:</b> ${hij(cur)}<br><b>الدرس:</b> ${esc(d.lesson||'—')}</div>
     <table class="all"><tr><th>م</th><th>الطالب</th><th>المتابعة</th><th>ملاحظة</th></tr>${rows}</table>
     <div class="f">المعلم: ${esc(S.set.teacher)}</div>`;
