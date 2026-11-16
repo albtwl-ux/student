@@ -159,9 +159,12 @@ $('pv').onclick=()=>{cur.setDate(cur.getDate()-1);render()};
 $('nx').onclick=()=>{cur.setDate(cur.getDate()+1);render()};
 $('bToday').onclick=()=>{cur=new Date();cur.setHours(12,0,0,0);render()};
 $('dPick').onchange=e=>{if(e.target.value){cur=new Date(e.target.value+'T12:00:00');render()}};
-$('bMan').onclick=()=>{$('man').classList.toggle('hide');$('set').classList.add('hide')};
-$('bSet').onclick=()=>{$('set').classList.toggle('hide');$('man').classList.add('hide');
-  $('sTeacher').value=S.set.teacher;$('sTitle').value=S.set.title};
+function openPanel(id,other){
+  const p=$(id);p.classList.toggle('hide');$(other).classList.add('hide');
+  if(!p.classList.contains('hide'))setTimeout(()=>p.scrollIntoView({behavior:'smooth',block:'start'}),50);
+}
+$('bMan').onclick=()=>openPanel('man','set');
+$('bSet').onclick=()=>{$('sTeacher').value=S.set.teacher;$('sTitle').value=S.set.title;openPanel('set','man')};
 ['Teacher','Title'].forEach(k=>$('s'+k).oninput=e=>{S.set[k.toLowerCase()]=e.target.value;save()});
 
 $('bAdd').onclick=()=>{
