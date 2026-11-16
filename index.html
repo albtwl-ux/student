@@ -91,7 +91,7 @@ input[type=text],input[type=date],textarea{width:100%;font-family:inherit;font-s
   <!-- الإعدادات -->
   <div class="card hide" id="set">
     <b>الإعدادات</b>
-    <label style="margin-top:8px">اسم المعلم</label><input type="text" id="sTeacher">
+    <label style="margin-top:8px">اسم المعلم (اختياري)</label><input type="text" id="sTeacher">
     <label style="margin-top:8px">عنوان التقرير</label><input type="text" id="sTitle">
     <div class="tools" style="margin-top:12px">
       <button class="btn" id="bExp">💾 نسخة احتياطية</button>
@@ -111,7 +111,8 @@ const SEED=[["أحمد صلاح عايش الراشد",599],["أمجد يوسف 
 const TAGS=['حفظ','سمع','أتقن','لم يتقن','غائب'];
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-if(!S||!S.students){S={students:SEED.map((x,i)=>({id:'s'+i,name:x[0],num:x[1]})),days:{},set:{teacher:'الأستاذ عيسى الخلف',title:'تقرير متابعة الطالب'}}}
+if(!S||!S.students){S={students:SEED.map((x,i)=>({id:'s'+i,name:x[0],num:x[1]})),days:{},set:{teacher:'',title:'تقرير متابعة الطالب'}}}
+if(S.set&&S.set.v!==2){S.set.teacher='';S.set.v=2}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 
 let cur=new Date();cur.setHours(12,0,0,0);
@@ -202,7 +203,7 @@ async function sendPdf(id,btn){
   if(r.note)rows.push(['ملاحظة',r.note]);
   $('pdfCard').innerHTML=`<div class="h"><b>${esc(S.set.title)}</b></div>
     <table>${rows.map(x=>`<tr><td>${x[0]}</td><td>${esc(x[1])}</td></tr>`).join('')}</table>
-    <div class="f">المعلم: ${esc(S.set.teacher)}</div>`;
+    ${S.set.teacher?`<div class="f">المعلم: ${esc(S.set.teacher)}</div>`:''}`;
   const old=btn.textContent;btn.textContent='⏳ جاري التجهيز...';btn.disabled=true;
   try{
     await document.fonts.ready;
@@ -232,7 +233,7 @@ async function sendAll(btn){
   c.innerHTML=`<div class="h"><b>كشف متابعة الطلاب</b></div>
     <div style="font-size:17px;margin-bottom:12px"><b>التاريخ:</b> ${hij(cur)}<br><b>الدرس:</b> ${esc(d.lesson||'—')}</div>
     <table class="all"><tr><th>م</th><th>الطالب</th><th>المتابعة</th><th>ملاحظة</th></tr>${rows}</table>
-    <div class="f">المعلم: ${esc(S.set.teacher)}</div>`;
+    ${S.set.teacher?`<div class="f">المعلم: ${esc(S.set.teacher)}</div>`:''}`;
   const old=btn.textContent;btn.textContent='⏳ جاري التجهيز...';btn.disabled=true;
   try{
     await document.fonts.ready;
