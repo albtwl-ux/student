@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>كشف المتابعة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--g:#0f766e;--bg:#f3f6f5;--c:#fff;--t:#1f2937;--m:#6b7280;--b:#d9e2df}
+*{box-sizing:border-box}
+body{margin:0;font-family:Tajawal,Tahoma,sans-serif;background:var(--bg);color:var(--t);padding-bottom:40px}
+header{background:var(--g);color:#fff;padding:12px;position:sticky;top:0;z-index:5}
+header h1{margin:0 0 6px;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+.date{display:flex;align-items:center;gap:6px}
+.date .d{flex:1;text-align:center;font-weight:700;font-size:16px}
+button{font-family:inherit;cursor:pointer}
+.nav{background:rgba(255,255,255,.2);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:16px}
+.wrap{max-width:640px;margin:auto;padding:10px}
+.card{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:12px;margin-bottom:10px}
+label{font-size:13px;color:var(--m);display:block;margin-bottom:4px}
+input[type=text],input[type=date],textarea{width:100%;font-family:inherit;font-size:16px;padding:10px;border:1px solid var(--b);border-radius:8px;background:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{border:1px solid var(--b);background:#fff;border-radius:20px;padding:7px 13px;font-size:15px;color:var(--t)}
+.chip.on{color:#fff;border-color:transparent}
+.chip[data-k="حفظ"].on{background:#2563eb}.chip[data-k="سمع"].on{background:#7c3aed}
+.chip[data-k="أتقن"].on{background:#16a34a}.chip[data-k="لم يتقن"].on{background:#dc2626}
+.chip[data-k="غائب"].on{background:#6b7280}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.name{font-weight:700;font-size:16px}.num{color:var(--m);font-size:12px}
+.send{background:var(--g);color:#fff;border:0;border-radius:8px;padding:9px 14px;font-size:15px;margin-top:8px;width:100%}
+.btn{background:#fff;border:1px solid var(--g);color:var(--g);border-radius:8px;padding:9px 12px;font-size:14px}
+.btn.red{border-color:#dc2626;color:#dc2626}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.hide{display:none}
+.prog{font-size:13px;color:var(--m)}
+.srow{display:flex;gap:6px;margin-bottom:6px}
+.srow input{flex:1}
+#pdfCard{position:fixed;left:-9999px;top:0;width:560px;background:#fff;padding:28px;font-family:Tajawal,Tahoma,sans-serif;direction:rtl;color:#111}
+#pdfCard .h{text-align:center;border-bottom:3px solid #0f766e;padding-bottom:10px;margin-bottom:16px}
+#pdfCard .h b{font-size:22px;color:#0f766e;display:block}
+#pdfCard .h span{font-size:15px;color:#444}
+#pdfCard table{width:100%;border-collapse:collapse;font-size:18px}
+#pdfCard td{border:1px solid #cfd8d5;padding:12px}
+#pdfCard td:first-child{background:#eef5f3;width:30%;font-weight:700}
+#pdfCard .f{margin-top:18px;text-align:left;font-size:15px;color:#444}
+#pdfCard table.all{font-size:16px;text-align:center}
+#pdfCard table.all th{background:#0f766e;color:#fff;border:1px solid #0f766e;padding:9px}
+#pdfCard table.all td{background:#fff;font-weight:400;width:auto;padding:9px}
+#pdfCard table.all tr:nth-child(even) td{background:#f3f8f6}
+</style>
+</head>
+<body>
+<header>
+  <h1><span>📒 كشف المتابعة</span><button class="nav" id="bSet">⚙️</button></h1>
+  <div class="date">
+    <button class="nav" id="nx">›</button>
+    <div class="d" id="dTxt"></div>
+    <button class="nav" id="pv">‹</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="tools">
+    <button class="btn" id="bToday">اليوم</button>
+    <input type="date" id="dPick" style="width:auto">
+    <button class="btn" id="bMan">👥 الطلاب</button>
+    <button class="btn" id="bAll" style="background:var(--g);color:#fff">📋 كشف الجميع PDF</button>
+  </div>
+
+  <div class="card">
+    <label>عنوان درس اليوم</label>
+    <input type="text" id="lesson" placeholder="مثال: سورة النبأ من آية 1 إلى 16">
+    <div class="prog" id="prog" style="margin-top:6px"></div>
+  </div>
+
+  <div id="list"></div>
+
+  <!-- إدارة الطلاب -->
+  <div class="card hide" id="man">
+    <b>إضافة طلاب</b>
+    <label style="margin-top:6px">اكتب اسم كل طالب في سطر (أو الصق قائمة)</label>
+    <textarea id="newNames" rows="4"></textarea>
+    <button class="send" id="bAdd">➕ إضافة</button>
+    <hr style="border:0;border-top:1px solid var(--b);margin:14px 0">
+    <b>تعديل / حذف</b>
+    <div id="mlist" style="margin-top:8px"></div>
+  </div>
+
+  <!-- الإعدادات -->
+  <div class="card hide" id="set">
+    <b>الإعدادات</b>
+    <label style="margin-top:8px">المدرسة</label><input type="text" id="sSchool">
+    <label style="margin-top:8px">اسم المعلم</label><input type="text" id="sTeacher">
+    <label style="margin-top:8px">عنوان التقرير</label><input type="text" id="sTitle">
+    <div class="tools" style="margin-top:12px">
+      <button class="btn" id="bExp">💾 نسخة احتياطية</button>
+      <button class="btn" id="bImp">📂 استرجاع</button>
+      <input type="file" id="fImp" accept=".json" class="hide">
+    </div>
+    <div class="prog">البيانات محفوظة في متصفح جوالك. خذ نسخة احتياطية من وقت لآخر.</div>
+  </div>
+</div>
+
+<div id="pdfCard"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const KEY='kashf_v1';
+const SEED=[["أحمد صلاح عايش الراشد",599],["أمجد يوسف علي العيسى",630],["الحسين يوسف عبدالوهاب الشقاق",524],["بدر إبراهيم عبدالله الحسن",527],["جواد عبدالهادي علي الشقاق",534],["حسين حسن حسين عمران الحماد",561],["رائد حبيب عبدالله أحمد الخلف",711],["زين العابدين محمد يوسف الشقاقيق",600],["سعود صلاح عبدالله حسين الغانم",663],["سيد علي محمود علي عيسى الهاشم",623],["سيد محمد فاضل عيسى الهاشم",695],["سيد منتظر مصطفى ناصر محمد العلي",631],["علي أحمد محمد الحاجي",640],["علي حسن عبدالله الجعفر",532],["علي محمد داود ذياب الخلف",559],["مهدي حسين علي الدليم",661],["يوسف هاني حبيب اللويمي",670]];
+const TAGS=['حفظ','سمع','أتقن','لم يتقن','غائب'];
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!S.students){S={students:SEED.map((x,i)=>({id:'s'+i,name:x[0],num:x[1]})),days:{},set:{school:'مدرسة الفيصلية الثانوية بالمبرز',teacher:'الأستاذ عيسى الخلف',title:'تقرير متابعة الطالب'}}}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+
+let cur=new Date();cur.setHours(12,0,0,0);
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const hij=d=>new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura-nu-latn',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(d).replace('هـ','').trim()+' هـ';
+const day=()=>S.days[iso(cur)]||(S.days[iso(cur)]={lesson:'',rec:{}});
+const rec=id=>{const d=day();return d.rec[id]||(d.rec[id]={tags:[],note:''})};
+
+function render(){
+  $('dTxt').textContent=hij(cur);$('dPick').value=iso(cur);
+  const d=S.days[iso(cur)]||{lesson:'',rec:{}};
+  $('lesson').value=d.lesson||'';
+  let done=0;
+  $('list').innerHTML=S.students.map(s=>{
+    const r=d.rec[s.id]||{tags:[],note:''};
+    if(r.tags.length||r.note)done++;
+    return `<div class="card" data-id="${s.id}">
+      <div class="row"><span class="name">${esc(s.name)}</span><span class="num">${s.num||''}</span></div>
+      <div class="chips">${TAGS.map(t=>`<button class="chip ${r.tags.includes(t)?'on':''}" data-k="${t}">${t}</button>`).join('')}</div>
+      <input type="text" class="note" placeholder="عبارة أخرى للولي (اختياري)" value="${esc(r.note||'')}">
+      <button class="send">📄 إرسال PDF لولي الأمر</button></div>`}).join('');
+  $('prog').textContent=`تمت متابعة ${done} من ${S.students.length}`;
+  $('mlist').innerHTML=S.students.map(s=>`<div class="srow" data-id="${s.id}"><input type="text" value="${esc(s.name)}"><button class="btn red del">🗑</button></div>`).join('');
+}
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+$('lesson').oninput=e=>{day().lesson=e.target.value;save()};
+$('list').addEventListener('click',e=>{
+  const card=e.target.closest('.card');if(!card)return;const id=card.dataset.id;
+  if(e.target.classList.contains('chip')){
+    const k=e.target.dataset.k,r=rec(id),i=r.tags.indexOf(k);
+    if(i>-1)r.tags.splice(i,1);else{
+      r.tags.push(k);
+      if(k==='أتقن')r.tags=r.tags.filter(x=>x!=='لم يتقن');
+      if(k==='لم يتقن')r.tags=r.tags.filter(x=>x!=='أتقن');
+    }
+    save();render();
+  }
+  if(e.target.classList.contains('send'))sendPdf(id,e.target);
+});
+$('list').addEventListener('input',e=>{
+  if(e.target.classList.contains('note')){rec(e.target.closest('.card').dataset.id).note=e.target.value;save()}
+});
+$('pv').onclick=()=>{cur.setDate(cur.getDate()-1);render()};
+$('nx').onclick=()=>{cur.setDate(cur.getDate()+1);render()};
+$('bToday').onclick=()=>{cur=new Date();cur.setHours(12,0,0,0);render()};
+$('dPick').onchange=e=>{if(e.target.value){cur=new Date(e.target.value+'T12:00:00');render()}};
+$('bMan').onclick=()=>{$('man').classList.toggle('hide');$('set').classList.add('hide')};
+$('bSet').onclick=()=>{$('set').classList.toggle('hide');$('man').classList.add('hide');
+  $('sSchool').value=S.set.school;$('sTeacher').value=S.set.teacher;$('sTitle').value=S.set.title};
+['School','Teacher','Title'].forEach(k=>$('s'+k).oninput=e=>{S.set[k.toLowerCase()]=e.target.value;save()});
+
+$('bAdd').onclick=()=>{
+  const names=$('newNames').value.split('\n').map(x=>x.trim()).filter(Boolean);
+  names.forEach(n=>S.students.push({id:'s'+Date.now()+Math.random().toString(36).slice(2,6),name:n,num:''}));
+  $('newNames').value='';save();render();
+};
+$('mlist').addEventListener('input',e=>{
+  const s=S.students.find(x=>x.id===e.target.closest('.srow').dataset.id);
+  if(s){s.name=e.target.value;save()}
+});
+$('mlist').addEventListener('change',()=>render());
+$('mlist').addEventListener('click',e=>{
+  if(!e.target.classList.contains('del'))return;
+  const id=e.target.closest('.srow').dataset.id,s=S.students.find(x=>x.id===id);
+  if(confirm('حذف الطالب: '+s.name+'؟')){S.students=S.students.filter(x=>x.id!==id);save();render()}
+});
+
+$('bExp').onclick=()=>{
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));
+  a.download='kashf-backup-'+iso(new Date())+'.json';a.click();
+};
+$('bImp').onclick=()=>$('fImp').click();
+$('fImp').onchange=async e=>{
+  try{const j=JSON.parse(await e.target.files[0].text());
+    if(j.students&&confirm('سيتم استبدال البيانات الحالية. متابعة؟')){S=j;save();render()}}
+  catch(_){alert('الملف غير صالح')}
+};
+
+async function sendPdf(id,btn){
+  const s=S.students.find(x=>x.id===id),r=rec(id),d=day();
+  const status=r.tags.length?r.tags.join(' - '):'—';
+  const rows=[['اسم الطالب',s.name],['التاريخ',hij(cur)],['عنوان الدرس',d.lesson||'—'],['المتابعة',status]];
+  if(r.note)rows.push(['ملاحظة',r.note]);
+  $('pdfCard').innerHTML=`<div class="h"><b>${esc(S.set.title)}</b><span>${esc(S.set.school)}</span></div>
+    <table>${rows.map(x=>`<tr><td>${x[0]}</td><td>${esc(x[1])}</td></tr>`).join('')}</table>
+    <div class="f">المعلم: ${esc(S.set.teacher)}</div>`;
+  const old=btn.textContent;btn.textContent='⏳ جاري التجهيز...';btn.disabled=true;
+  try{
+    await document.fonts.ready;
+    const cv=await html2canvas($('pdfCard'),{scale:2,backgroundColor:'#fff'});
+    const w=148,h=cv.height*w/cv.width;
+    const pdf=new jspdf.jsPDF({unit:'mm',format:[w,h]});
+    pdf.addImage(cv.toDataURL('image/jpeg',.92),'JPEG',0,0,w,h);
+    const blob=pdf.output('blob');
+    const fname=s.name+' - '+iso(cur)+'.pdf';
+    const file=new File([blob],fname,{type:'application/pdf'});
+    const text='السلام عليكم ورحمة الله، تقرير متابعة الطالب '+s.name;
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],text});}catch(err){if(err.name!=='AbortError')throw err}
+    }else{
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();
+      alert('تم تنزيل الملف، أرسله من واتساب.');
+    }
+  }catch(err){alert('تعذر إنشاء الملف: '+err.message)}
+  btn.textContent=old;btn.disabled=false;
+}
+
+async function sendAll(btn){
+  const d=day(),c=$('pdfCard');
+  const rows=S.students.map((s,i)=>{const r=d.rec[s.id]||{tags:[],note:''};
+    return `<tr><td>${i+1}</td><td style="text-align:right">${esc(s.name)}</td><td>${r.tags.join(' - ')||'—'}</td><td>${esc(r.note||'')}</td></tr>`}).join('');
+  c.style.width='760px';
+  c.innerHTML=`<div class="h"><b>كشف متابعة الطلاب</b><span>${esc(S.set.school)}</span></div>
+    <div style="font-size:17px;margin-bottom:12px"><b>التاريخ:</b> ${hij(cur)}<br><b>الدرس:</b> ${esc(d.lesson||'—')}</div>
+    <table class="all"><tr><th>م</th><th>الطالب</th><th>المتابعة</th><th>ملاحظة</th></tr>${rows}</table>
+    <div class="f">المعلم: ${esc(S.set.teacher)}</div>`;
+  const old=btn.textContent;btn.textContent='⏳ جاري التجهيز...';btn.disabled=true;
+  try{
+    await document.fonts.ready;
+    const cv=await html2canvas(c,{scale:2,backgroundColor:'#fff'});
+    const pw=cv.width,ph=Math.floor(pw*297/210);
+    const pdf=new jspdf.jsPDF({unit:'mm',format:'a4'});
+    for(let y=0,p=0;y<cv.height;y+=ph,p++){
+      const sh=Math.min(ph,cv.height-y),pc=document.createElement('canvas');
+      pc.width=pw;pc.height=sh;pc.getContext('2d').drawImage(cv,0,y,pw,sh,0,0,pw,sh);
+      if(p)pdf.addPage();
+      pdf.addImage(pc.toDataURL('image/jpeg',.92),'JPEG',0,0,210,sh*210/pw);
+    }
+    const blob=pdf.output('blob'),fname='كشف المتابعة - '+iso(cur)+'.pdf';
+    const file=new File([blob],fname,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],text:'كشف متابعة الطلاب - '+hij(cur)})}catch(err){if(err.name!=='AbortError')throw err}
+    }else{
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();
+      alert('تم تنزيل الملف، أرسله من واتساب.');
+    }
+  }catch(err){alert('تعذر إنشاء الملف: '+err.message)}
+  c.style.width='';btn.textContent=old;btn.disabled=false;
+}
+$('bAll').onclick=e=>sendAll(e.currentTarget);
+render();
+</script>
+</body>
+</html>
